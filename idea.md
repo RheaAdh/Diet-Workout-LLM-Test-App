@@ -14,6 +14,7 @@
 - Workout plan (P1)
 - Chatbot: answer questions about created plans, and provide motivation or tips (P2)
 - Authentication with data stored (P2)
+- Based on previous search history search products that can be used...
 
 ## Tech
 - LLM Framework : Langchain
