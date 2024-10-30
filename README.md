@@ -23,3 +23,6 @@
 - Database: Mysql
 - Backend : FastAPI
 - Other: Docker
+
+## Run Server
+- uvicorn main:app --reload

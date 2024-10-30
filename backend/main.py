@@ -1,32 +1,32 @@
-# main.py
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import openai
+from transformers import pipeline
 import os
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
 app = FastAPI()
 
-SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:"+os.getenv("DB_PASSWORD")+"@127.0.0.1:3306/health"
+SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:" + os.getenv("DB_PASSWORD") + "@127.0.0.1:3306/health"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-openai.api_key = os.getenv("OPEN_API_KEY")
+# Load Hugging Face pipeline for text generation
+diet_plan_generator = pipeline("text-generation", model="gpt2")  
+workout_plan_generator = pipeline("text-generation", model="gpt2") 
 
 class UserInput(BaseModel):
     age: int
     gender: str
-    height_feet: int  # Height in feet
-    height_inches: Optional[int] = 0  # Additional inches (optional)
-    weight: float  # Weight in kg
+    height_feet: int
+    height_inches: Optional[int] = 0
+    weight: float
     workout_days: int
     diet_type: str  # Veg/Non-Veg
     dietary_restrictions: Optional[str] = None
@@ -48,42 +48,42 @@ def feet_inches_to_cm(feet: int, inches: int = 0) -> float:
 def calculate_bmi(height_cm: float, weight: float) -> float:
     return weight / (height_cm / 100) ** 2
 
-def generate_plan(user_input: UserInput) -> Dict:
+def generate_diet_plan(user_input: UserInput) -> str:
     height_cm = feet_inches_to_cm(user_input.height_feet, user_input.height_inches)
     prompt = (
-        f"Create a diet and workout plan for a {user_input.age}-year-old {user_input.gender} "
-        f"who is {height_cm} cm tall and weighs {user_input.weight} kg. They work out "
-        f"{user_input.workout_days} days a week, prefer a {user_input.diet_type} diet, "
-        f"and have the following dietary restrictions: {user_input.dietary_restrictions or 'none'}."
+        f"Create a diet plan for a {user_input.age}-year-old {user_input.gender}, "
+        f"{height_cm} cm tall, weighing {user_input.weight} kg, who works out {user_input.workout_days} days a week. "
+        f"Prefer a {user_input.diet_type} diet with restrictions: {user_input.dietary_restrictions or 'none'}. "
+        f"Include meals for breakfast, lunch, dinner, and snacks with portion sizes."
     )
     
-    # Updated method for API call
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # Consider using "gpt-4" if applicable
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=500
+    response = diet_plan_generator(prompt, max_length=250)
+    return response[0]['generated_text'].strip()
+
+def generate_workout_plan(user_input: UserInput) -> str:
+    prompt = (
+        f"Create a workout plan for a {user_input.age}-year-old {user_input.gender} "
+        f"who weighs {user_input.weight} kg and works out {user_input.workout_days} days a week. "
+        f"Include specific exercises, sets, and reps."
     )
-    
-    plan = response.choices[0].message['content'].strip()
-    return {"plan": plan}
+    response = workout_plan_generator(prompt, max_length=250)
+    return response[0]['generated_text'].strip()
 
 @app.post("/generate_plan/")
 async def create_plan(user_input: UserInput):
     try:
         height_cm = feet_inches_to_cm(user_input.height_feet, user_input.height_inches)
         bmi = calculate_bmi(height_cm, user_input.weight)
-        
-        plan = generate_plan(user_input)
-        
+
+        diet_plan = generate_diet_plan(user_input)
+        workout_plan = generate_workout_plan(user_input)
+
         return {
             "BMI": round(bmi, 2),
-            "Diet and Workout Plan": plan["plan"]
+            "Diet Plan": diet_plan,
+            "Workout Plan": workout_plan
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 Base.metadata.create_all(bind=engine)
-
-# Run with: uvicorn main:app --reload
