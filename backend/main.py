@@ -7,10 +7,19 @@ from sqlalchemy.orm import sessionmaker
 from transformers import pipeline
 import os
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+
 
 load_dotenv()
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins or specify your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
 
 SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:" + os.getenv("DB_PASSWORD") + "@127.0.0.1:3306/health"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

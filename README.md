@@ -18,7 +18,7 @@
 
 ## Tech
 - LLM Framework : Langchain
-- LLM Model : OpenAI's GPT-3
+- LLM Model : Hugging Face
 - Frontend : React.js
 - Database: Mysql
 - Backend : FastAPI
