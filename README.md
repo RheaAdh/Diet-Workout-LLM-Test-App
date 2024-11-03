@@ -1,4 +1,4 @@
-# Tailored diet and workout plan
+# Diet and workout plan using Hugging Face
 
 ## User Input and Preferences
 - Age
@@ -12,17 +12,12 @@
 - BMI (P1)
 - Diet plan (P1)
 - Workout plan (P1)
-- Chatbot: answer questions about created plans, and provide motivation or tips (P2)
-- Authentication with data stored (P2)
-- Based on previous search history search products that can be used...
 
 ## Tech
-- LLM Framework : Langchain
 - LLM Model : Hugging Face
 - Frontend : React.js
 - Database: Mysql
 - Backend : FastAPI
-- Other: Docker
 
 ## Run Server
 - uvicorn main:app --reload
