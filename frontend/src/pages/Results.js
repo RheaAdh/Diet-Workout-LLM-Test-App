@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './App.css';
-import loaderGif from './loader.gif'
+import loaderGif from '../assets/loader.gif'
 
 const Results = () => {
     const location = useLocation();
